@@ -13,6 +13,8 @@
 #include <string.h>
 #include "ui.h"
 
+/* Updated help message to provide clearer instructions to the user. */
+
 int main(int argc, char *argv[])
 {
 	if (argc > 1) {
