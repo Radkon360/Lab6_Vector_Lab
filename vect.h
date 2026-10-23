@@ -12,6 +12,8 @@
 #ifndef VECT_H
 #define VECT_H
 
+/* Commment change for lab 6 */
+
 #define NAME_LEN 32
 
 typedef struct {

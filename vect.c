@@ -12,6 +12,8 @@
  */
 #include "vect.h"
 
+/* Commment change for lab 6 */
+
 vect add(vect a, vect b)
 {
 	vect r = {"", 0.0, 0.0, 0.0};
