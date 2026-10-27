@@ -1,41 +1,34 @@
 /***********************************************
- * Filename: vect.c
- * Author: Konrad Swierczek
- * Compile: gcc vectormain.c ui.c vect.c vectstore.c csvio.c -o minimat
- * Run: ./minimat
- ***********************************************/
+* Filename: vect.h
+* Author: Konrad Swierczek
+* Compile: gcc main.c ui.c vect.c vectstore.c -o minimat
+* Run: ./minimat
+***********************************************/
 
 /*
- * vect.c
- * Operations layer: pure math, no I/O and no storage access.
- * Results are returned with an empty name; the caller names them.
- */
-#include "vect.h"
+* vect.h
+* Operations layer: the vector struct and the math performed on it.
+*/
+#ifndef VECT_H
+#define VECT_H
 
-vect add(vect a, vect b)
-{
-    vect r = {"", 0.0, 0.0, 0.0};
-    r.x = a.x + b.x;
-    r.y = a.y + b.y;
-    r.z = a.z + b.z;
-    return r;
-}
+#define NAME_LEN 32
 
-vect sub(vect a, vect b)
-{
-    vect r = {"", 0.0, 0.0, 0.0};
-    r.x = a.x - b.x;
-    r.y = a.y - b.y;
-    r.z = a.z - b.z;
-    return r;
-}
+typedef struct {
+char name[NAME_LEN];
+double x;
+double y;
+double z;
+} vect;
 
-vect scale(vect a, double s)
-{
-    vect r = {"", 0.0, 0.0, 0.0};
-    r.x = a.x * s;
-    r.y = a.y * s;
-    r.z = a.z * s;
-    return r;
-}
+/* Element-by-element sum a + b */
+vect add(vect a, vect b);
+
+/* Element-by-element difference a - b. */
+vect sub(vect a, vect b);
+
+/* Each component of a multiplied by scalar s. */
+vect scale(vect a, double s);
+
+#endif
 
