@@ -1,189 +1,95 @@
-# MiniMat - 3D Vector Calculator
+# minimat – Vector Calculator
 
-## Author
-Konrad Swierczek
+**Author:** Konrad Swierczek
+**Course:** CPE-2600 Systems Programming, Fall 2026
 
-## Course
-CPE-2600 Systems Programming
+## Description
 
-## Project Description
+`minimat` is an interactive command-line calculator for 3D vectors written in C.
+Vectors are stored by name. At the `minimat>` prompt you create vectors, combine
+them with `+`, `-`, and `*`, and view, save, or load them.
 
-MiniMat is an interactive command-line vector calculator written in C. The program allows users to create, store, display, and manipulate three-dimensional vectors.
+Each line is split into tokens (commas are treated as spaces), then the UI layer
+decides whether it is an assignment, an expression, or a command. Spaces are
+required around `=`, `+`, `-`, and `*`.
 
-Vectors may be assigned names and stored in memory for later use. Supported operations include vector addition, vector subtraction, and scalar multiplication.
+Version 2.0 adds:
 
-Beginning with Lab 7, vector storage uses dynamic memory allocation, allowing the program to store an arbitrary number of vectors until available memory is exhausted. Support has also been added for loading vectors from CSV files and saving vectors to CSV files.
+- Dynamic memory storage for vectors (no fixed limit)
+- Loading and saving vectors to and from CSV files
 
-## Features
-
-### Vector Storage
-- Create named vectors
-- Replace existing vectors
-- Display stored vectors
-- List all vectors
-- Clear all vectors
-
-### Vector Operations
-- Vector addition
-- Vector subtraction
-- Scalar multiplication
-- Assignment of operation results
-
-### Dynamic Memory
-- Dynamically expands storage as vectors are added
-- Releases all allocated memory when cleared
-- Releases all allocated memory on program exit
-
-### File I/O
-- Load vectors from CSV files
-- Save vectors to CSV files
-- Handles missing files gracefully
-- Handles malformed CSV entries gracefully
-
-## Building
-
-Compile the project:
-
-    make
-
-Remove object files and executable:
-
-    make clean
-
-## Running
-
-Run the program:
-
-    ./minimat
-
-Display help information:
-
-    ./minimat -h
-
-## Commands
-
-Create a Vector:
-
-    a = 1 2 3
-
-or
-
-    a = 1,2,3
-
-Display a Vector:
-
-    a
-
-Add Vectors:
-
-    a + b
-
-Subtract Vectors:
-
-    a - b
-
-Scalar Multiplication:
-
-    a * 2
-
-or
-
-    2 * a
-
-Assignment:
-
-    c = a + b
-
-    d = c * 3
-
-List Vectors:
-
-    list
-
-Clear Vectors:
-
-    clear
-
-Load CSV File:
-
-    load vectors.csv
-
-Save CSV File:
-
-    save output.csv
-
-Exit Program:
-
-    quit
-
-## CSV File Format
-
-Example:
-
-    a,1,2,3
-    b,4.4,5.5,6.6
-    c,8.8,11,13.2
-
-Format:
-
-    name,x,y,z
+Version 1.0 (Lab 5) used a fixed-size storage array and no file I/O.
 
 ## Source Files
 
-vectormain.c
-- Program entry point and command-line argument handling.
+| File | Purpose |
+| --- | --- |
+| `vectormain.c` | Entry point, `-h` handling, exit cleanup |
+| `ui.c` / `ui.h` | Prompt, parser, and all console I/O |
+| `vect.c` / `vect.h` | Vector math (add, subtract, scale) |
+| `vectstore.c` / `vectstore.h` | Dynamic vector storage |
+| `csvio.c` / `csvio.h` | CSV load and save |
 
-ui.c / ui.h
-- User interface, command parsing, and console I/O.
+## Build
 
-vect.c / vect.h
-- Vector math operations including addition, subtraction, and scalar multiplication.
+```
+gcc vectormain.c ui.c vect.c vectstore.c csvio.c -o minimat
+```
 
-vectstore.c / vectstore.h
-- Vector storage management, dynamic memory allocation, and vector lookup functions.
+## Run
 
-Makefile
-- Build automation.
+```
+./minimat
+```
 
-## Testing
+Command line options:
 
-The program was tested for:
+- `-h` : print the help message and exit
 
-- Vector creation
-- Vector replacement
-- Vector addition
-- Vector subtraction
-- Scalar multiplication
-- List command
-- Clear command
-- CSV loading
-- CSV saving
-- Invalid file handling
-- Malformed CSV handling
-- Memory leak detection using Valgrind
+Any other option prints an error and exits with status 1.
 
-Example:
+## Commands
 
-    valgrind --leak-check=full ./minimat
+1. `name = x y z` : create or replace a vector (commas also work, e.g. `a = 1,2,3`)
+2. `name` : display a vector
+3. `a + b` : add two vectors
+4. `a - b` : subtract two vectors
+5. `a * n` or `n * a` : multiply a vector by a number
+6. `c = a + b` : store the result of an operation (also works with `-` and `*`)
+7. `list` : list all stored vectors
+8. `clear` : remove all stored vectors
+9. `load <file>` : load vectors from a CSV file (format: `name,x,y,z`)
+10. `save <file>` : save all vectors to a CSV file
+11. `quit` : exit the program
 
-Expected result:
+Notes:
 
-    All heap blocks were freed -- no leaks are possible
+- An operation without an assignment is shown as `ans` and is not stored.
+- Vector names start with a letter or underscore, contain only letters, digits,
+  and underscores, and cannot be `quit`, `clear`, `list`, `load`, or `save`.
+- File names cannot contain spaces.
+- `load` merges into memory; a loaded vector with an existing name replaces it.
+- `save` replaces an existing file.
 
-## Example Session
+## Dynamic Memory
 
-    minimat> a = 1 2 3
-    a = 1 2 3
+Vectors are kept in a single heap-allocated array owned by `vectstore.c`.
 
-    minimat> b = 4 5 6
-    b = 4 5 6
+- The pointer starts as `NULL` with a capacity of 0.
+- The first `addvect()` call allocates room for 4 vectors with `realloc()`.
+- Whenever the array is full, `addvect()` doubles the capacity with `realloc()`.
+- The result of `realloc()` goes into a temporary pointer first, so a failed
+  allocation leaves the original block valid and `addvect()` returns -1.
+- Adding a vector whose name already exists replaces it in place, with no growth.
+- `clearvects()` calls `free()` on the array and resets the pointer, count, and
+  capacity, so storage can be reused afterward.
+- `clear` calls `clearvects()` directly.
+- `main()` registers `clearvects()` with `atexit()`, so memory is freed on
+  `quit`, end of input (Ctrl-D), and Ctrl-C. A `SIGINT` handler only sets a
+  flag, so the program leaves through the normal exit path.
 
-    minimat> c = a + b
-    c = 5 7 9
+## Version Tags
 
-    minimat> d = c * 2
-    d = 10 14 18
+- `v1.0` : Lab 5 version (fixed-size storage, no file I/O)
+- `v2.0` : Lab 7 version (dynamic memory and CSV load/save)
 
-    minimat> save vectors.csv
-
-    minimat> quit
